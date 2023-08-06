@@ -1,13 +1,22 @@
 import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { TextInput, Button, FAB } from 'react-native-paper';
+import { TextInput, Button, FAB, Snackbar } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 
-const AddRoutineScreen = () => {
+const AddRoutineScreen = ({ route }) => {
     const navigation = useNavigation();
     const [routineName, setRoutineName] = useState('');
     const [routineImage, setRoutineImage] = useState('');
     const [routineComponents, setRoutineComponents] = useState([{ id: 1, title: '', goal: '' }]);
+    const [showSnackbar, setShowSnackbar] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState('');
+
+    const existingRoutines = route.params?.existingRoutines || [];
+
+    // Function to check if a routine with the given name already exists
+    const isRoutineNameDuplicate = (name) => {
+        return existingRoutines.some((routine) => routine.name === name);
+    };
 
     // Function to handle adding a new component to the routine
     const addComponent = () => {
@@ -21,15 +30,41 @@ const AddRoutineScreen = () => {
 
     // Function to handle saving the new routine
     const saveRoutine = () => {
-        // Save the routine data to your backend or storage (you can implement this part later)
         const newRoutine = {
             name: routineName,
             image: routineImage,
             components: routineComponents,
         };
 
-        // Pass the newRoutine back to HomeScreen
-        navigation.navigate('Home', { newRoutine });
+        if (
+            routineName.trim() === '' ||
+            routineComponents.some((component) => component.title.trim() === '' || component.goal.trim() === '')
+        ) {
+            // Display a snackbar message to notify the user about the missing fields
+            setSnackbarMessage("Please fill in all non-optional fields before saving the routine.");
+            setShowSnackbar(true);
+        } else if (isRoutineNameDuplicate(routineName)) {
+            // Display a snackbar message to notify the user about the duplicate name
+            setSnackbarMessage("Routine name already exists. Please choose a different name.");
+            setShowSnackbar(true);
+        } else {
+            // Pass the newRoutine back to HomeScreen if it's not a duplicate
+            navigation.navigate('Home', { newRoutine });
+        }
+    };
+
+    // Function to handle input change for component goals
+    const handleComponentGoalChange = (text, index) => {
+        const goalValue = parseInt(text, 10);
+        const newComponents = [...routineComponents];
+        if (!isNaN(goalValue) && goalValue > 0) {
+            // If the user input is a valid integer, update the goal value
+            newComponents[index].goal = goalValue.toString();
+        } else {
+            // If the user input is not a valid integer, set the goal value to an empty string
+            newComponents[index].goal = '';
+        }
+        setRoutineComponents(newComponents);
     };
 
     return (
@@ -61,11 +96,8 @@ const AddRoutineScreen = () => {
                     <TextInput
                         label={`Component ${index + 1} Goal`}
                         value={component.goal}
-                        onChangeText={(text) => {
-                            const newComponents = [...routineComponents];
-                            newComponents[index].goal = text;
-                            setRoutineComponents(newComponents);
-                        }}
+                        onChangeText={(text) => handleComponentGoalChange(text, index)}
+                        keyboardType="numeric" // Set the keyboard to numeric to display a numeric keyboard
                         style={styles.input}
                     />
                 </View>
@@ -76,10 +108,16 @@ const AddRoutineScreen = () => {
                 style={styles.fab}
                 icon="close"
                 onPress={() => {
-                    // Go back to the HomeScreen without saving
                     navigation.goBack();
                 }}
             />
+            <Snackbar
+                visible={showSnackbar}
+                onDismiss={() => setShowSnackbar(false)}
+                duration={4000}
+            >
+                {snackbarMessage}
+            </Snackbar>
         </View>
     );
 };
