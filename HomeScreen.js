@@ -1,19 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, FlatList, StyleSheet, Text, Pressable, Dimensions } from 'react-native';
-import { Appbar, List, FAB } from 'react-native-paper';
-import { useNavigation } from '@react-navigation/native';
+import { Appbar, List, FAB, IconButton, TouchableRipple } from 'react-native-paper';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 const HomeScreen = ({ route }) => {
     const navigation = useNavigation();
     const [routines, setRoutines] = useState([]);
 
-    // Get the newRoutine data from AddRoutineScreen and update the routines list
-    React.useEffect(() => {
-        if (route.params?.newRoutine) {
-            const newRoutine = route.params.newRoutine;
-            setRoutines([...routines, newRoutine]);
+    // Effect to update routines when the route params change
+    useEffect(() => {
+        if (route.params?.routines) {
+            setRoutines(route.params.routines);
         }
-    }, [route.params?.newRoutine]);
+    }, [route.params]);
 
     // Custom component for rendering each routine as a pressable box
     const RoutineItem = ({ routine }) => (
@@ -31,12 +30,37 @@ const HomeScreen = ({ route }) => {
         </Pressable>
     );
 
+    // Function to handle editing a routine
+    const editRoutine = (routine) => {
+        navigation.navigate('AddRoutine', { routine, existingRoutines: routines });
+    };
+
+    // Function to handle deleting a routine
+    const deleteRoutine = (routine) => {
+        const updatedRoutines = routines.filter((item) => item.name !== routine.name);
+        setRoutines(updatedRoutines);
+    };
+
     return (
         <View style={styles.container}>
-            {/* Remove Appbar.Header */}
             <FlatList
                 data={routines}
-                renderItem={({ item }) => <RoutineItem routine={item} />}
+                renderItem={({ item }) => (
+                    <TouchableRipple onPress={() => { }}>
+                        <View style={styles.routineItem}>
+                            <View style={styles.routineInfo}>
+                                <List.Item
+                                    title={item.name}
+                                    description={item.components.length + (item.components.length != 1 ? ' tasks' : ' task')}
+                                />
+                            </View>
+                            <View style={styles.iconButtons}>
+                                <IconButton icon="pencil" onPress={() => editRoutine(item)} />
+                                <IconButton icon="delete" onPress={() => deleteRoutine(item)} />
+                            </View>
+                        </View>
+                    </TouchableRipple>
+                )}
                 keyExtractor={(item) => item.name}
             />
             <FAB
@@ -53,23 +77,26 @@ const HomeScreen = ({ route }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        paddingTop: 8, // To avoid overlapping the status bar
+    },
+    routineItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+    },
+    routineInfo: {
+        flex: 1,
+        marginRight: 16,
+    },
+    iconButtons: {
+        flexDirection: 'row',
     },
     fab: {
         position: 'absolute',
         margin: 16,
         right: 0,
         bottom: 0,
-    },
-    routineItem: {
-        width: Dimensions.get('window').width,
-        paddingVertical: 16,
-        paddingHorizontal: 20,
-        borderBottomWidth: 1,
-        borderBottomColor: '#DDD',
-    },
-    routineName: {
-        fontSize: 18,
     },
 });
 

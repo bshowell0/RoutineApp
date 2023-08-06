@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { TextInput, Button, FAB, Snackbar } from 'react-native-paper';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 const AddRoutineScreen = ({ route }) => {
     const navigation = useNavigation();
@@ -12,10 +12,20 @@ const AddRoutineScreen = ({ route }) => {
     const [snackbarMessage, setSnackbarMessage] = useState('');
 
     const existingRoutines = route.params?.existingRoutines || [];
+    const editingRoutine = route.params?.routine || null;
+
+    useEffect(() => {
+        // If editingRoutine exists, pre-fill the form with its details
+        if (editingRoutine) {
+            setRoutineName(editingRoutine.name);
+            setRoutineImage(editingRoutine.image);
+            setRoutineComponents(editingRoutine.components);
+        }
+    }, [editingRoutine]);
 
     // Function to check if a routine with the given name already exists
     const isRoutineNameDuplicate = (name) => {
-        return existingRoutines.some((routine) => routine.name === name);
+        return existingRoutines.some((routine) => routine.name === name && routine.name !== editingRoutine?.name);
     };
 
     // Function to handle adding a new component to the routine
@@ -48,8 +58,21 @@ const AddRoutineScreen = ({ route }) => {
             setSnackbarMessage("Routine name already exists. Please choose a different name.");
             setShowSnackbar(true);
         } else {
-            // Pass the newRoutine back to HomeScreen if it's not a duplicate
-            navigation.navigate('Home', { newRoutine });
+            const newRoutine = {
+                name: routineName,
+                image: routineImage,
+                components: routineComponents,
+            };
+            if (editingRoutine) {
+                // If editingRoutine exists, update the routine in the list
+                const updatedRoutines = existingRoutines.map((routine) =>
+                    routine.name === editingRoutine.name ? newRoutine : routine
+                );
+                navigation.navigate('Home', { routines: updatedRoutines });
+            } else {
+                // If editingRoutine doesn't exist, add the new routine to the list
+                navigation.navigate('Home', { routines: [...existingRoutines, newRoutine] });
+            }
         }
     };
 
