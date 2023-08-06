@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, FlatList } from 'react-native';
 import { TextInput, Button, FAB, Snackbar } from 'react-native-paper';
 import { useNavigation, useRoute } from '@react-navigation/native';
 
 const AddRoutineScreen = ({ route }) => {
     const navigation = useNavigation();
     const [routineName, setRoutineName] = useState('');
-    const [routineImage, setRoutineImage] = useState('');
-    const [routineComponents, setRoutineComponents] = useState([{ id: 1, title: '', goal: '' }]);
+    const [routineComponents, setRoutineComponents] = useState([{ id: 1, title: '', goal: '', image: '' }]);
     const [showSnackbar, setShowSnackbar] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
 
@@ -18,7 +17,6 @@ const AddRoutineScreen = ({ route }) => {
         // If editingRoutine exists, pre-fill the form with its details
         if (editingRoutine) {
             setRoutineName(editingRoutine.name);
-            setRoutineImage(editingRoutine.image);
             setRoutineComponents(editingRoutine.components);
         }
     }, [editingRoutine]);
@@ -34,6 +32,7 @@ const AddRoutineScreen = ({ route }) => {
             id: routineComponents.length + 1,
             title: '',
             goal: '',
+            image: '',
         };
         setRoutineComponents([...routineComponents, newComponent]);
     };
@@ -42,7 +41,6 @@ const AddRoutineScreen = ({ route }) => {
     const saveRoutine = () => {
         const newRoutine = {
             name: routineName,
-            image: routineImage,
             components: routineComponents,
         };
 
@@ -51,16 +49,15 @@ const AddRoutineScreen = ({ route }) => {
             routineComponents.some((component) => component.title.trim() === '' || component.goal.trim() === '')
         ) {
             // Display a snackbar message to notify the user about the missing fields
-            setSnackbarMessage("Please fill in all non-optional fields before saving the routine.");
+            setSnackbarMessage('Please fill in all non-optional fields before saving the routine.');
             setShowSnackbar(true);
         } else if (isRoutineNameDuplicate(routineName)) {
             // Display a snackbar message to notify the user about the duplicate name
-            setSnackbarMessage("Routine name already exists. Please choose a different name.");
+            setSnackbarMessage('Routine name already exists. Please choose a different name.');
             setShowSnackbar(true);
         } else {
             const newRoutine = {
                 name: routineName,
-                image: routineImage,
                 components: routineComponents,
             };
             if (editingRoutine) {
@@ -91,6 +88,7 @@ const AddRoutineScreen = ({ route }) => {
     };
 
     return (
+
         <View style={styles.container}>
             <TextInput
                 label="Routine Name"
@@ -98,33 +96,41 @@ const AddRoutineScreen = ({ route }) => {
                 onChangeText={(text) => setRoutineName(text)}
                 style={styles.input}
             />
-            <TextInput
-                label="Routine Image URL (Optional)"
-                value={routineImage}
-                onChangeText={(text) => setRoutineImage(text)}
-                style={styles.input}
+            <FlatList removeClippedSubviews={false}
+                data={routineComponents}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={({ item, index }) => (
+                    <View key={item.id}>
+                        <TextInput
+                            label={`Component ${index + 1} Title`}
+                            value={item.title}
+                            onChangeText={(text) => {
+                                const newComponents = [...routineComponents];
+                                newComponents[index].title = text;
+                                setRoutineComponents(newComponents);
+                            }}
+                            style={styles.input}
+                        />
+                        <TextInput
+                            label={`Component ${index + 1} Goal`}
+                            value={item.goal}
+                            onChangeText={(text) => handleComponentGoalChange(text, index)}
+                            keyboardType="numeric" // Set the keyboard to numeric to display a numeric keyboard
+                            style={styles.input}
+                        />
+                        <TextInput
+                            label={`Component ${index + 1} Image URL (Optional)`}
+                            value={item.image}
+                            onChangeText={(text) => {
+                                const newComponents = [...routineComponents];
+                                newComponents[index].image = text;
+                                setRoutineComponents(newComponents);
+                            }}
+                            style={styles.input}
+                        />
+                    </View>
+                )}
             />
-            {routineComponents.map((component, index) => (
-                <View key={component.id}>
-                    <TextInput
-                        label={`Component ${index + 1} Title`}
-                        value={component.title}
-                        onChangeText={(text) => {
-                            const newComponents = [...routineComponents];
-                            newComponents[index].title = text;
-                            setRoutineComponents(newComponents);
-                        }}
-                        style={styles.input}
-                    />
-                    <TextInput
-                        label={`Component ${index + 1} Goal`}
-                        value={component.goal}
-                        onChangeText={(text) => handleComponentGoalChange(text, index)}
-                        keyboardType="numeric" // Set the keyboard to numeric to display a numeric keyboard
-                        style={styles.input}
-                    />
-                </View>
-            ))}
             <Button onPress={addComponent}>Add Component</Button>
             <Button onPress={saveRoutine}>Save Routine</Button>
             <FAB
@@ -134,11 +140,7 @@ const AddRoutineScreen = ({ route }) => {
                     navigation.goBack();
                 }}
             />
-            <Snackbar
-                visible={showSnackbar}
-                onDismiss={() => setShowSnackbar(false)}
-                duration={4000}
-            >
+            <Snackbar visible={showSnackbar} onDismiss={() => setShowSnackbar(false)} duration={4000}>
                 {snackbarMessage}
             </Snackbar>
         </View>
@@ -148,7 +150,9 @@ const AddRoutineScreen = ({ route }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        flexGrow: 1,
         padding: 16,
+        height: 500
     },
     input: {
         marginBottom: 12,

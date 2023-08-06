@@ -14,6 +14,8 @@ const HomeScreen = ({ route }) => {
         }
     }, [route.params]);
 
+    {/*}
+    // OLD I THINK
     // Custom component for rendering each routine as a pressable box
     const RoutineItem = ({ routine }) => (
         <Pressable
@@ -29,6 +31,34 @@ const HomeScreen = ({ route }) => {
             <Text style={styles.routineName}>{routine.name}</Text>
         </Pressable>
     );
+    */}
+
+    const RoutineItem = ({ routine }) => {
+        const navigation = useNavigation();
+
+        return (
+            <TouchableRipple
+                onPress={() => navigation.navigate('ViewRoutine', { routine })}
+                style={({ pressed }) => [
+                    styles.routineItem,
+                    { backgroundColor: pressed ? '#EFEFEF' : 'white' },
+                ]}
+            >
+                <View style={styles.routineItemContainer}>
+                    <View style={styles.routineInfo}>
+                        <List.Item
+                            title={routine.name}
+                            description={`${routine.components.length} ${routine.components.length !== 1 ? 'tasks' : 'task'}`}
+                        />
+                    </View>
+                    <View style={styles.iconButtons}>
+                        <IconButton icon="pencil" onPress={() => editRoutine(routine)} />
+                        <IconButton icon="delete" onPress={() => deleteRoutine(routine)} />
+                    </View>
+                </View>
+            </TouchableRipple>
+        );
+    };
 
     // Function to handle editing a routine
     const editRoutine = (routine) => {
@@ -45,22 +75,7 @@ const HomeScreen = ({ route }) => {
         <View style={styles.container}>
             <FlatList
                 data={routines}
-                renderItem={({ item }) => (
-                    <TouchableRipple onPress={() => { }}>
-                        <View style={styles.routineItem}>
-                            <View style={styles.routineInfo}>
-                                <List.Item
-                                    title={item.name}
-                                    description={item.components.length + (item.components.length != 1 ? ' tasks' : ' task')}
-                                />
-                            </View>
-                            <View style={styles.iconButtons}>
-                                <IconButton icon="pencil" onPress={() => editRoutine(item)} />
-                                <IconButton icon="delete" onPress={() => deleteRoutine(item)} />
-                            </View>
-                        </View>
-                    </TouchableRipple>
-                )}
+                renderItem={({ item }) => <RoutineItem routine={item} />}
                 keyExtractor={(item) => item.name}
             />
             <FAB
@@ -84,6 +99,11 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         paddingHorizontal: 16,
         paddingVertical: 12,
+    },
+    routineItemContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
     },
     routineInfo: {
         flex: 1,

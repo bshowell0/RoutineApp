@@ -4,6 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import HomeScreen from './HomeScreen';
 import AddRoutineScreen from './AddRoutineScreen';
+import ViewRoutineScreen from './ViewRoutineScreen';
 
 const Stack = createStackNavigator();
 
@@ -14,6 +15,7 @@ const App = () => {
                 <Stack.Navigator initialRouteName="Home">
                     <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'My Routines' }} />
                     <Stack.Screen name="AddRoutine" component={AddRoutineScreen} options={{ title: 'Add Routine' }} />
+                    <Stack.Screen name="ViewRoutine" component={ViewRoutineScreen} options={{ title: 'View Routine' }} />
                 </Stack.Navigator>
             </NavigationContainer>
         </PaperProvider>
