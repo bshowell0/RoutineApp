@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, StyleSheet, Text, Image, TouchableOpacity } from 'react-native';
-import { Button } from 'react-native-paper';
+import { IconButton, FAB, Button } from 'react-native-paper';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { PanGestureHandler, State } from 'react-native-gesture-handler';
 
 const ViewRoutineScreen = ({ route }) => {
     const { routine } = route.params;
     const [currentComponentIndex, setCurrentComponentIndex] = useState(0);
     const [componentCount, setComponentCount] = useState(0);
+    const panGestureRef = useRef(null);
 
     const currentComponent = routine.components[currentComponentIndex];
 
@@ -22,6 +25,19 @@ const ViewRoutineScreen = ({ route }) => {
         setComponentCount((prevCount) => Math.max(0, prevCount - 1));
     };
 
+    const handleGestureStateChange = (event) => {
+        if (event.nativeEvent.state === State.END) {
+            const dx = event.nativeEvent.translationX;
+            if (dx > 100 && currentComponentIndex > 0) {
+                setCurrentComponentIndex(currentComponentIndex - 1);
+                setComponentCount(0);
+            } else if (dx < -100 && currentComponentIndex < routine.components.length - 1) {
+                setCurrentComponentIndex(currentComponentIndex + 1);
+                setComponentCount(0);
+            }
+        }
+    };
+
     return (
         <View style={styles.container}>
             <Text style={styles.routineName}>{routine.name}</Text>
@@ -31,14 +47,18 @@ const ViewRoutineScreen = ({ route }) => {
             </View>
             {currentComponent.image && <Image source={{ uri: currentComponent.image }} style={styles.image} />}
             <View style={styles.bottomContainer}>
-                <View style={styles.counterContainer}>
-                    <TouchableOpacity onPress={decrementCount} style={styles.counterButton}>
-                        <Text style={styles.counterButtonText}>–</Text>
-                    </TouchableOpacity>
-                    <Text style={styles.counterText}>{componentCount}</Text>
-                    <TouchableOpacity onPress={incrementCount} style={styles.counterButton}>
-                        <Text style={styles.counterButtonText}>+</Text>
-                    </TouchableOpacity>
+                <View style={styles.bottomBackgroundContainer}>
+                    <PanGestureHandler onHandlerStateChange={handleGestureStateChange}>
+                        <View style={styles.counterContainer}>
+                            <TouchableOpacity onPress={decrementCount} style={styles.counterButton}>
+                                <Text style={styles.counterButtonText}>–</Text>
+                            </TouchableOpacity>
+                            <Text style={styles.counterText}>{componentCount}</Text>
+                            <TouchableOpacity onPress={incrementCount} style={styles.counterButton}>
+                                <Text style={styles.counterButtonText}>+</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </PanGestureHandler>
                 </View>
             </View>
         </View>
@@ -100,6 +120,15 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'flex-end',
         paddingBottom: 48,
+        backgroundColor: 'blue',
+    },
+    bottomBackgroundContainer: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: 'gray',
+        marginBottom: -48,
     }
 });
 
