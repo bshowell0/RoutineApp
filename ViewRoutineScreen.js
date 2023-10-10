@@ -123,7 +123,6 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'flex-end',
         paddingBottom: 48,
-        backgroundColor: 'blue',
     },
 });
 
